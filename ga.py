@@ -228,7 +228,7 @@ def select_mating_pool(pop, num_parents_mating):
     # shuffling the pop then select top of pops
     index = np.random.choice(pop.shape[0], num_parents_mating, replace=False)
     random_individual = pop[index]
-    np.delete(pop,index)
+    np.delete(pop, index)
     # print (mating_pool)
     return random_individual
 
@@ -278,11 +278,11 @@ def crossover(parents):
         parent_1 = mating_parents[0]
         parent_2 = mating_parents[1]
         swap_task_pos = random.randrange(parent_1.shape[0])
-        crossover_point = random.randrange(parent_1[0].rfind('-') + 1, len(parent_1[0])-4)
+        crossover_point = random.randrange(parent_1[0].rfind('-') + 1, len(parent_1[0]) - 4)
         offspring_1 = parent_1[swap_task_pos][0:crossover_point] + parent_2[swap_task_pos][crossover_point:]
         offspring_2 = parent_2[swap_task_pos][0:crossover_point] + parent_1[swap_task_pos][crossover_point:]
-        parent_1[swap_task_pos]=offspring_1
-        parent_2[swap_task_pos]= offspring_2
+        parent_1[swap_task_pos] = offspring_1
+        parent_2[swap_task_pos] = offspring_2
         offsprings.append(parent_1)
         offsprings.append(parent_2)
         mating_pool = np.delete(mating_pool, list(mating_idx), axis=0)
@@ -331,8 +331,11 @@ def mutation_HP(offspring_crossover, random_rate):
 
 def mutation(population, random_rate):
     geneSet = ['0', '1']
+    pop = np.copy(population)
+    mutation_offspring = []
     # Mutation changes a number of genes as defined by the num_mutations argument. The changes are random.
-    for individual in population:
+    for individual in pop:
+        mutate_flag = 0
         for task in individual:
             # print(task)
             rate = random.uniform(0, 1)
@@ -343,5 +346,9 @@ def mutation(population, random_rate):
                     if newGene == task[index] \
                     else newGene
                 task = task[:index] + mutate_gene + task[index + 1:]
+                if mutate_flag == 0:
+                    mutate_flag = 1
+        if mutate_flag:
+            mutation_offspring.append(individual)
 
-    return population
+    return np.asarray(mutation_offspring)

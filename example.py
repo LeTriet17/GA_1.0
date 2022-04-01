@@ -7,14 +7,14 @@ Genetic algorithm parameters:
     Population size
 """
 start_time = time.time()
-sol_per_pop = 400
+sol_per_pop = 500
 num_parents_mating = 100
 # Creating the initial population.
 population = ga.createParent(sol_per_pop)
 pop_size = population.shape
 
 best_outputs = []
-num_generations = 100
+num_generations = 200
 mutation_rate = 0.4
 for generation in range(num_generations):
     print("Generation : ", generation)
@@ -61,7 +61,7 @@ for generation in range(num_generations):
     # ==============================HP=============================
     # print("Mutation")
     # Creating the new population based on the parents and offspring.
-    pop_and_child = np.concatenate((offspring_mutation, offspring_crossover, parents))
+    pop_and_child = np.concatenate((offspring_mutation, offspring_crossover, parents,population))
 
     pop_and_child_fitness = ga.cal_pop_fitness(pop_and_child)
     # get n-largest element from pop_and_child

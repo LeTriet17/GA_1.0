@@ -3,14 +3,21 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
-        <entry key="/GA-Timetableling/data.csv">
+        <entry key="/data.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/GA-Timetableling/resource.csv">
+        <entry key="/out.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/resource.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
