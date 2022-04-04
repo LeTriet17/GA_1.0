@@ -340,7 +340,7 @@ def mutation(population, random_rate):
             # print(task)
             rate = random.uniform(0, 1)
             if rate < random_rate:
-                index = random.randrange(task.rfind('-') + 1, len(task))
+                index = random.randrange(task.rfind('-') + 1, len(task)-4)
                 newGene, alternate = random.sample(geneSet, 2)
                 mutate_gene = alternate \
                     if newGene == task[index] \
