@@ -201,11 +201,15 @@ def manday_chromosome(chromosome):  # fitness function
 
     for key, value in MANDAY.items():
         team, date, site = key
+        date = date[:len(date)-1]+'000'+date[-1]
         data_resource_value = get_resource(team, date, site)
         if data_resource_value == -1:  # gen date with date not in resouce
             HC_score += 1
         elif data_resource_value < value:
             HC_score += 1
+        # print('date',date)
+        # print(data_resource_value)
+        # print(value)
 
     return HC_score
     # ,SC_score
@@ -278,9 +282,24 @@ def crossover(parents):
         parent_1 = mating_parents[0]
         parent_2 = mating_parents[1]
         swap_task_pos = random.randrange(parent_1.shape[0])
-        crossover_point = random.randrange(parent_1[0].rfind('-') + 1, len(parent_1[0]) - 4)
-        offspring_1 = parent_1[swap_task_pos][0:crossover_point] + parent_2[swap_task_pos][crossover_point:]
-        offspring_2 = parent_2[swap_task_pos][0:crossover_point] + parent_1[swap_task_pos][crossover_point:]
+        crossover_point = random.sample(range(parent_1[0].rfind('-') + 1, len(parent_1[0]) - 4), 2)
+        crossover_point.sort()
+        offspring_1 = parent_1[swap_task_pos][0:crossover_point[0]] + parent_2[swap_task_pos][
+                                                                      crossover_point[0]:crossover_point[1]] + parent_1[
+                                                                                                                   swap_task_pos][
+                                                                                                               crossover_point[
+                                                                                                                   1]:]
+        offspring_2 = parent_2[swap_task_pos][0:crossover_point[0]] + parent_1[swap_task_pos][
+                                                                      crossover_point[0]:crossover_point[1]] + parent_2[
+                                                                                                                   swap_task_pos][
+                                                                                                               crossover_point[
+                                                                                         1]:]
+        #check cross_over
+        # print(crossover_point)
+        # print('Par1', parent_1[swap_task_pos])
+        # print('Par2', parent_2[swap_task_pos])
+        # print('Off1', offspring_1)
+        # print('Off2', offspring_2)
         parent_1[swap_task_pos] = offspring_1
         parent_2[swap_task_pos] = offspring_2
         offsprings.append(parent_1)
@@ -340,7 +359,7 @@ def mutation(population, random_rate):
             # print(task)
             rate = random.uniform(0, 1)
             if rate < random_rate:
-                index = random.randrange(task.rfind('-') + 1, len(task)-4)
+                index = random.randrange(task.rfind('-') + 1, len(task) - 4)
                 newGene, alternate = random.sample(geneSet, 2)
                 mutate_gene = alternate \
                     if newGene == task[index] \
