@@ -1,6 +1,9 @@
 import copy
-import numpy as np
 import random
+
+import numpy as np
+
+
 #import string_utils
 
 def random_resetting(task):

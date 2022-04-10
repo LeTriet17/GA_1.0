@@ -1,6 +1,8 @@
-import numpy as np
 import copy
 import random
+
+import numpy as np
+
 
 def multipoint_cross_over(parent1,parent2):
     

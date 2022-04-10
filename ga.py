@@ -1,9 +1,7 @@
-from ctypes.wintypes import HDC
-import numpy as np
-import pandas as pd
-import random
 import datetime
-import time
+
+import pandas as pd
+
 from cross_over_method import *
 from mutant_method import *
 
@@ -23,6 +21,16 @@ def get_resource(team, date, site):  # return side resource
     if date not in date_unique:
         return -1
     return resource_data[(resource_data['bdpocdiscipline'] == team) & (resource_data['date'] == date)][site].item()
+
+
+def _cal_end_date(date_begin, shift, est_dur):
+    after_shift = shift ==1 or int(est_dur) != est_dur
+    if shift == 1 and int(est_dur) != est_dur:
+        after_shift = 0
+        est_dur += 1
+    dt_end = datetime.datetime.strptime(date_begin, '%d/%m/%Y') + datetime.timedelta(days=int(est_dur))
+
+    return dt_end, after_shift
 
 
 # Preprocessing WONUM_data
@@ -50,7 +58,7 @@ def _str_time_prop(start, end, time_format, prop):
 def _random_date(start, end, prop):  # 0001 = current year, 0002 = next year
     # generate date in current data
     sched_start = _str_time_prop(start, end, "%d/%m/%Y", prop)
-    if (int(sched_start[:2]) != 0):
+    if int(sched_start[:2]) != 0:
         date_sched_start = format(int(sched_start[:2]), '05b')
     else:
         date_sched_start = format(1, '05b')
@@ -65,6 +73,8 @@ def _generate_parent():
     df = data
     for wonum, tarsd, tared in zip(df.wonum, df.targstartdate, df.targcompdate):
         rand_date = _random_date(tarsd, tared, random.random())
+        shift = random.choice([0, 1])
+        rand_date = ''.join([chr(shift), rand_date])
         chromosome = '-'.join([wonum, tarsd, tared, rand_date])
         genes.append(chromosome)
     return genes
@@ -94,14 +104,6 @@ def access_row_by_wonum(wonum):
 
 
 def point_duration(duration):
-    # point = 0
-    # if duration > 2:  # target_start_date > 2 + start_date
-    #     point += 10000
-    # elif duration > 1:
-    #     point += 500
-    # elif duration > 0:
-    #     point += 100
-    # return point
     if duration > 0:
         return 1
     return 0
@@ -116,7 +118,8 @@ def convert_datetime_to_string(dt):
 
 def manday_chromosome(chromosome):  # fitness function
     MANDAY = dict()
-    HC_score = 0
+    HC_score_time = 0
+    HC_score_resource = 0
     # SC_score = 0
     # violate_child = dict()
 
@@ -124,7 +127,7 @@ def manday_chromosome(chromosome):  # fitness function
         # print(chromosome)
         # take bit and convert to component
         component = child.split(
-            '-')  # convert: H13807098-01/12/0001-09/03/0002-10110000110 to ['H13807098', '01/12/0001', '09/03/0002', '10110000110']
+            '-')  # convert: H13807098-01/12/0001-09/03/0002-101100001101 to ['H13807098', '01/12/0001', '09/03/0002', '101100001101']
         # take component
         wonum = component[0]
         target_date_begin = component[1]
@@ -133,30 +136,8 @@ def manday_chromosome(chromosome):  # fitness function
         # print (target_date_begin)
         # print (end_date_begin)
         # print (bit_date)
-        date_begin = decode_datetime(bit_date).split('/')
-        date = int(date_begin[0])
-        month = int(date_begin[1])
-        year = int(date_begin[2])
-        # # penalty on month and year
-        # if month > 12 or month < 1 or year > 2:
-        #     # SC_score += 1
-        #     HC_score += 1
-        #     continue
-        # # penalty on date
-        # if (
-        #         month == 1 or month == 3 or month == 5 or month == 7 or month == 8 or month == 10 or month == 12) and date > 31:
-        #     # SC_score += 1
-        #     HC_score += 1
-        #     continue
-        # if month == 2 and date > 28:
-        #     HC_score += 1
-        #     continue
-        # if (month == 4 or month == 6 or month == 9 or month == 11) and date > 30:
-        #     # SC_score += 1
-        #     HC_score += 1
-        #     continue
-
-        date_begin = decode_datetime(bit_date)
+        shift = int(bit_date[1])
+        date_begin = decode_datetime(bit_date[1:])
         # access from dataframe
         est_dur = access_row_by_wonum(wonum)['r_estdur']
         site = access_row_by_wonum(wonum)['site']
@@ -165,34 +146,32 @@ def manday_chromosome(chromosome):  # fitness function
         # convert to datetime type
         try:
             dt_begin = datetime.datetime.strptime(date_begin, '%d/%m/%Y')
-            dt_end = datetime.datetime.strptime(date_begin, '%d/%m/%Y') + datetime.timedelta(days=int(est_dur))
+            dt_end, shift_end = _cal_end_date(date_begin, shift, est_dur)
             std_begin = datetime.datetime.strptime(target_date_begin, '%d/%m/%Y')  # start target_day datetime
             etd_end = datetime.datetime.strptime(end_date_begin, '%d/%m/%Y')  # end target_day datetime
-
             duration_start = (std_begin - dt_begin).days
             duration_end = (dt_end - etd_end).days
-
             # compute violate point in every element
             if point_duration(duration_start):
-                HC_score += 1
+                HC_score_time += 1
                 continue
             if point_duration(duration_end):
-                HC_score += 1
+                HC_score_time += 1
                 continue
             # violate_child[wonum] = point
 
-            tup = (team, convert_datetime_to_string(dt_begin), site)
+            tup = (team, convert_datetime_to_string(dt_begin), shift, site)
 
             MANDAY[tup] = MANDAY.get(tup, 0) + 1
-            # compute manday resource
-            for i in range(1, est_dur):
-                run_date = dt_begin + datetime.timedelta(days=i)
-                tup_temp = (team, convert_datetime_to_string(run_date), site)
 
+            # compute manday resource
+            for i in np.arange(0, est_dur, 0.5):
+                run_date, run_shift = _cal_end_date(date_begin,shift ,i)
+                tup_temp = (team, convert_datetime_to_string(run_date), shift, site)
                 MANDAY[tup_temp] = MANDAY.get(tup_temp, 0) + 1
         except Exception:
             # invalid days
-            HC_score += 1
+            HC_score_time += 1
         # =========================ERORR==========================
         # tup = (team, convert_datetime_to_string(dt_end), site)
         # MANDAY[tup] = MANDAY.get(tup, 0) + 1
@@ -200,18 +179,20 @@ def manday_chromosome(chromosome):  # fitness function
     # print violate_child
 
     for key, value in MANDAY.items():
-        team, date, site = key
-        date = date[:len(date)-1]+'000'+date[-1]
+        team, date, shift, site = key
+        date = date[:len(date) - 1] + '000' + date[-1]
         data_resource_value = get_resource(team, date, site)
+
         if data_resource_value == -1:  # gen date with date not in resouce
-            HC_score += 1
+            HC_score_resource += 1
         elif data_resource_value < value:
-            HC_score += 1
+            HC_score_resource += 1
         # print('date',date)
         # print(data_resource_value)
         # print(value)
-
-    return HC_score
+    print('score time', HC_score_time)
+    print('score resource', HC_score_resource)
+    return HC_score_time, HC_score_resource
     # ,SC_score
 
 
@@ -221,8 +202,8 @@ def cal_pop_fitness(pop):
     # The fitness function calulates the sum of products between each input and its corresponding weight.
     fitness = []
     for chromosome in pop:
-        HC = manday_chromosome(chromosome)
-        fitness.append(1 / (10 * HC + 1))
+        HC_time, HC_rs = manday_chromosome(chromosome)
+        fitness.append(1 / (10 * (HC_time+ HC_rs) + 1))
     fitness = np.array(fitness)
 
     return fitness
@@ -269,10 +250,6 @@ def select_mating_pool_distinct(pop, num_parents_mating):
     return mating_pool
 
 
-def cross_over_on_two_chromosome(parent1, parent2):
-    return
-
-
 def crossover(parents):
     mating_pool = np.copy(parents)
     offsprings = []
@@ -293,13 +270,7 @@ def crossover(parents):
                                                                       crossover_point[0]:crossover_point[1]] + parent_2[
                                                                                                                    swap_task_pos][
                                                                                                                crossover_point[
-                                                                                         1]:]
-        #check cross_over
-        # print(crossover_point)
-        # print('Par1', parent_1[swap_task_pos])
-        # print('Par2', parent_2[swap_task_pos])
-        # print('Off1', offspring_1)
-        # print('Off2', offspring_2)
+                                                                                                                   1]:]
         parent_1[swap_task_pos] = offspring_1
         parent_2[swap_task_pos] = offspring_2
         offsprings.append(parent_1)

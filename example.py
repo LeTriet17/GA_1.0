@@ -1,21 +1,24 @@
-import ga
-import numpy as np
 import time
+
+import numpy as np
+import pandas as pd
+import ga
+
 """
 Genetic algorithm parameters:
     Mating pool size
     Population size
 """
 start_time = time.time()
-sol_per_pop = 500
-num_parents_mating = 100
+sol_per_pop = 10
+num_parents_mating = 4
 # Creating the initial population.
 population = ga.createParent(sol_per_pop)
 pop_size = population.shape
 
 best_outputs = []
-num_generations = 200
-mutation_rate = 0.4
+num_generations = 10
+mutation_rate = 1
 for generation in range(num_generations):
     print("Generation : ", generation)
     # Measuring the fitness of each chromosome in the population.'
@@ -68,23 +71,7 @@ for generation in range(num_generations):
     n_largest_index = pop_and_child_fitness.argsort()[-pop_size[0]:]
     population = pop_and_child[n_largest_index]
 
-    # ===========================DEBUG=======================
-    # test_array = []
-    # ele_0 = population[0]
-    # for i,ele in enumerate(population):
-    #     if i == 0:
-    #         continue
-    #     flag = False
-    #     for task1,task2 in zip(ele_0,ele):
-    #         if task1 != task2:
-    #             flag = True
-    #             break
-    #     test_array.append(flag)
-    # print(test_array)
-    # ===========================DEBUG=======================
-    # new_population[0:parents.shape[0], :] = parents
-    # new_population[parents.shape[0]:, :] = offspring_mutation
-    # break
+
 # Getting the best solution after iterating finishing all generations.
 # At first, the fitness is calculated for each solution in the final generation.
 fitness = ga.cal_pop_fitness(population)
@@ -94,7 +81,9 @@ best_result = population[best_match_idx, :]
 for chromosome_index in range(best_result.shape[0]):
     chromosome = best_result[chromosome_index]
     chromosome = str(chromosome).split('-')
-    chromosome[-1] = ga.decode_datetime(chromosome[-1])
+    shift = chromosome[-1][1]
+    chromosome[-1] = ga.decode_datetime(chromosome[-1][1:])
+    chromosome.append(shift)
     best_result[chromosome_index] = '-'.join(chromosome)
 # print("Best solution : ", best_result)
 print("Best solution fitness : ", fitness[best_match_idx])
@@ -107,11 +96,11 @@ matplotlib.pyplot.ylabel("Fitness")
 matplotlib.pyplot.show()
 # Save result to out.csv
 
-# df = pd.DataFrame(best_result)
-# df = df[0].str.split('-', expand=True)
-# df.columns = ['wonum', 'targstartdate', 'targcompdate', 'schedstartdate']
-# from pathlib import Path
+df = pd.DataFrame(best_result)
+df = df[0].str.split('-', expand=True)
+df.columns = ['wonum', 'targstartdate', 'targcompdate', 'schedstartdate', 'shift']
+from pathlib import Path
 
-# filepath = Path('out.csv')
-# filepath.parent.mkdir(parents=True, exist_ok=True)
-# df.to_csv(filepath)
+filepath = Path('out.csv')
+filepath.parent.mkdir(parents=True, exist_ok=True)
+df.to_csv(filepath)

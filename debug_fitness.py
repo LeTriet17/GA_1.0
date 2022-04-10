@@ -1,11 +1,3 @@
-from ctypes.wintypes import HDC
-import numpy as np
-import pandas as pd
-import random
-import datetime
-import time
-from cross_over_method import *
-from mutant_method import *
 from ga import *
 
 resource_path = "resource.csv"
