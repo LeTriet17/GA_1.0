@@ -10,15 +10,14 @@ Genetic algorithm parameters:
     Population size
 """
 start_time = time.time()
-sol_per_pop = 10
-num_parents_mating = 4
+sol_per_pop = 50
+num_parents_mating = 2
 # Creating the initial population.
-population = ga.createParent(sol_per_pop)
+population = ga.createPop(sol_per_pop)
 pop_size = population.shape
-
 best_outputs = []
-num_generations = 10
-mutation_rate = 1
+num_generations = 2
+mutation_rate = 0.1
 for generation in range(num_generations):
     print("Generation : ", generation)
     # Measuring the fitness of each chromosome in the population.'
@@ -65,7 +64,6 @@ for generation in range(num_generations):
     # print("Mutation")
     # Creating the new population based on the parents and offspring.
     pop_and_child = np.concatenate((offspring_mutation, offspring_crossover, parents,population))
-
     pop_and_child_fitness = ga.cal_pop_fitness(pop_and_child)
     # get n-largest element from pop_and_child
     n_largest_index = pop_and_child_fitness.argsort()[-pop_size[0]:]
@@ -77,14 +75,17 @@ for generation in range(num_generations):
 fitness = ga.cal_pop_fitness(population)
 # Then return the index of that solution corresponding to the best fitness.
 best_match_idx = np.argmax(fitness == np.max(fitness))
-best_result = population[best_match_idx, :]
-for chromosome_index in range(best_result.shape[0]):
-    chromosome = best_result[chromosome_index]
+best_result = population[best_match_idx]
+ga.manday_chromosome(best_result, True)
+print(best_result.HC_time)
+print(best_result.HC_resource)
+for chromosome_index in range(best_result.chromosome.shape[0]):
+    chromosome = best_result.chromosome[chromosome_index]
     chromosome = str(chromosome).split('-')
     shift = chromosome[-1][1]
     chromosome[-1] = ga.decode_datetime(chromosome[-1][1:])
     chromosome.append(shift)
-    best_result[chromosome_index] = '-'.join(chromosome)
+    best_result.chromosome[chromosome_index] = '-'.join(chromosome)
 # print("Best solution : ", best_result)
 print("Best solution fitness : ", fitness[best_match_idx])
 print("--- %s seconds ---" % (time.time() - start_time))
@@ -96,7 +97,7 @@ matplotlib.pyplot.ylabel("Fitness")
 matplotlib.pyplot.show()
 # Save result to out.csv
 
-df = pd.DataFrame(best_result)
+df = pd.DataFrame(best_result.chromosome)
 df = df[0].str.split('-', expand=True)
 df.columns = ['wonum', 'targstartdate', 'targcompdate', 'schedstartdate', 'shift']
 from pathlib import Path

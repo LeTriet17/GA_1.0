@@ -17,6 +17,20 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/population/chromosome_0.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/population/chromosome_2.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/resource.csv">
           <value>
             <Attribute>

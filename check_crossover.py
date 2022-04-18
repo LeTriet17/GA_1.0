@@ -8,10 +8,10 @@ Genetic algorithm parameters:
     Population size
 """
 start_time = time.time()
-sol_per_pop = 1
+sol_per_pop = 100
 num_parents_mating = 2
 # Creating the initial population.
-population = ga.createParent(sol_per_pop)
+population = ga.createPop(sol_per_pop)
 pop_size = population.shape
 
 best_outputs = []

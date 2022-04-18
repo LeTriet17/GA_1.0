@@ -141,7 +141,7 @@ np.random.seed(0)
 #  'H13831713-06/03/0002-31/03/0002-10100001110',
 #  'H13831717-06/03/0002-31/03/0002-10100001110']
 
-chromosome = createParent(1)[0]
+chromosome = createPop(1)[0]
 print(len(chromosome))
 # print(debug_partial(chromosome))
 # chromosome = beautiful_print(chromosome)
