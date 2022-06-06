@@ -10,13 +10,13 @@ Genetic algorithm parameters:
     Population size
 """
 start_time = time.time()
-sol_per_pop = 50
-num_parents_mating = 2
+sol_per_pop = 100
+num_parents_mating = 50
 # Creating the initial population.
 population = ga.createPop(sol_per_pop)
 pop_size = population.shape
 best_outputs = []
-num_generations = 2
+num_generations = 20
 mutation_rate = 0.1
 for generation in range(num_generations):
     print("Generation : ", generation)
@@ -63,12 +63,12 @@ for generation in range(num_generations):
     # ==============================HP=============================
     # print("Mutation")
     # Creating the new population based on the parents and offspring.
-    pop_and_child = np.concatenate((offspring_mutation, offspring_crossover, parents,population))
+    pop_and_child = np.concatenate((offspring_mutation, offspring_crossover, parents, population))
     pop_and_child_fitness = ga.cal_pop_fitness(pop_and_child)
+    # print('pop_and_child_fitness',pop_and_child_fitness)
     # get n-largest element from pop_and_child
     n_largest_index = pop_and_child_fitness.argsort()[-pop_size[0]:]
     population = pop_and_child[n_largest_index]
-
 
 # Getting the best solution after iterating finishing all generations.
 # At first, the fitness is calculated for each solution in the final generation.

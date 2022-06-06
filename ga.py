@@ -1,5 +1,5 @@
 import datetime
-
+import copy
 import pandas as pd
 
 from cross_over_method import *
@@ -46,47 +46,12 @@ data = data.drop('index', axis=1)
 dict_wonum = {x: y for x, y in zip(data.wonum, data.index)}
 
 
-# # Generate random date
-# def _str_time_prop(start, end, time_format, prop):
-#     stime = datetime.datetime.strptime(start, time_format)
-#     etime = datetime.datetime.strptime(end, time_format)
-#
-#     ptime = stime + prop * (etime - stime)
-#     ptime = ptime.strftime("%d/%m/%Y")
-#     return ptime
-#
-#
-# def _random_date(start, end, prop):  # 0001 = current year, 0002 = next year
-#     # generate date in current data
-#     sched_start = _str_time_prop(start, end, "%d/%m/%Y", prop)
-#     if int(sched_start[:2]) != 0:
-#         date_sched_start = format(int(sched_start[:2]), '05b')
-#     else:
-#         date_sched_start = format(1, '05b')
-#     month_sched_start = format(int(sched_start[3:5]), '04b')
-#     year_sched_start = format(int(sched_start[6:]), '02b')
-#     sched_start = ''.join([date_sched_start, month_sched_start, year_sched_start])
-#     return sched_start
-#
-#
-# def _generate_parent():
-#     genes = []
-#     df = data
-#     for wonum, tarsd, tared in zip(df.wonum, df.targstartdate, df.targcompdate):
-#         rand_date = _random_date(tarsd, tared, random.random())
-#         shift = random.choice([0, 1])
-#         rand_date = ''.join([chr(shift), rand_date])
-#         chromosome = '-'.join([wonum, tarsd, tared, rand_date])
-#         genes.append(chromosome)
-#     return genes
-
-
 # Create population function
 def createPop(sol_per_pop):
     new_population = []
     for i in range(sol_per_pop):
-        new_invidual = CHROMOSOME(data)
-        new_population.append(new_invidual)
+        new_individual = CHROMOSOME(data)
+        new_population.append(new_individual)
     new_population = np.asarray(new_population)
     return new_population
 
@@ -133,7 +98,8 @@ def manday_chromosome(chromosome, error_output=False):  # fitness function
         target_date_begin = component[1]
         end_date_begin = component[2]
         bit_date = component[3]
-        shift = int(bit_date[1])
+        # shift = int(bit_date[1])
+        shift = int(bit_date[0])
         date_begin = decode_datetime(bit_date[1:])
         # access from dataframe
         est_dur = access_row_by_wonum(wonum)['r_estdur']
@@ -204,13 +170,13 @@ def select_mating_pool(pop, num_parents_mating):
     # shuffling the pop then select top of pops
     index = np.random.choice(pop.shape[0], num_parents_mating, replace=False)
     random_individual = pop[index]
-    np.delete(pop, index)
+    pop = np.delete(pop, index)  # split current pop into remain_pop and mating_pool
     # print (mating_pool)
     return random_individual
 
 
 def crossover(parents):
-    mating_pool = np.copy(parents)
+    mating_pool = copy.deepcopy(parents)
     offsprings = []
     while mating_pool.size > 0:
         mating_idx = np.random.choice(mating_pool.shape[0], 2, replace=False)
@@ -248,7 +214,8 @@ def crossover(parents):
 
 def mutation(population, random_rate):
     geneSet = ['0', '1']
-    pop = np.copy(population)
+    pop = copy.deepcopy(population)
+
     mutation_offspring = []
     # Mutation changes a number of genes as defined by the num_mutations argument. The changes are random.
     for chromosome in pop:
