@@ -8,16 +8,19 @@ import ga
 Genetic algorithm parameters:
     Mating pool size
     Population size
+    Epoch
+    Mutation Rate
 """
 start_time = time.time()
-sol_per_pop = 100
-num_parents_mating = 50
+sol_per_pop = 200
+num_parents_mating = 100
+num_generations = 20
+mutation_rate = 0.1
 # Creating the initial population.
 population = ga.createPop(sol_per_pop)
 pop_size = population.shape
 best_outputs = []
-num_generations = 20
-mutation_rate = 0.1
+res = pd.DataFrame()
 for generation in range(num_generations):
     print("Generation : ", generation)
     # Measuring the fitness of each chromosome in the population.'
@@ -69,6 +72,9 @@ for generation in range(num_generations):
     # get n-largest element from pop_and_child
     n_largest_index = pop_and_child_fitness.argsort()[-pop_size[0]:]
     population = pop_and_child[n_largest_index]
+    (unique, counts) = np.unique(population, return_counts=True)
+    value_fre_dict = {unique[i]: counts[i] for i in range(len(unique))}
+    res = pd.concat([res, value_fre_dict], ignore_index=True, axis=0)
 
 # Getting the best solution after iterating finishing all generations.
 # At first, the fitness is calculated for each solution in the final generation.
