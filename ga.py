@@ -9,16 +9,16 @@ from chromosome import *
 # Get resource
 resource_path = "resource.csv"
 resource_data = pd.read_csv(resource_path)
-# resource_data.columns = resource_data.columns.str.lower()
-# resource_data = resource_data[['date', 'manday_ht', 'manday_mt', 'bdpocdiscipline']]
-# resource_data = resource_data.rename(columns={"manday_ht": "HT", "manday_mt": "MT"})
-# resource_data.date = resource_data.date.apply(lambda row: row[:-4] + "000" + row[-1])
-resource_data = resource_data.loc[resource_data['bdpocdiscipline'] == 'PROD']
-# print(resource_data)
+resource_data = resource_data.loc[resource_data['bdpocdiscipline'] == 'E&I']
+resource_data = resource_data.reset_index(drop = True)
+# resource_data = resource_data.loc[resource_data['bdpocdiscipline'] == 'RES']
+# resource_data = resource_data.loc[resource_data['bdpocdiscipline'] == 'PROD']
+# resource_data = resource_data.loc[resource_data['bdpocdiscipline'] == 'MECH']
+
 date_unique = np.unique(resource_data.date.to_list()).astype(list)
 
 
-def get_resource(team, date, site):  # return side resource
+def get_resource(team, date, site):
     if date not in date_unique:
         return -1
     return resource_data[(resource_data['bdpocdiscipline'] == team) & (resource_data['date'] == date)][site].item()
@@ -40,9 +40,8 @@ data = pd.read_csv(data_path)
 
 data = data.drop('Unnamed: 0', axis=1)
 data = data[data.site != 'Not Defined']
-data = data.loc[data['bdpocdiscipline'] == 'PROD']
-data = data.reset_index()
-data = data.drop('index', axis=1)
+data = data.loc[data['bdpocdiscipline'] == 'E&I']
+data = data.dropna().reset_index(drop=True)
 dict_wonum = {x: y for x, y in zip(data.wonum, data.index)}
 
 
@@ -142,15 +141,14 @@ def manday_chromosome(chromosome, error_output=False):  # fitness function
         team, date, shift, site = key
         date = date[:len(date) - 1] + '000' + date[-1]
         data_resource_value = get_resource(team, date, site)
-
         if data_resource_value == -1 or data_resource_value < value:
-            if date not in chromosome.HC_resource:  # gen date with date not in resouce
+
+            if date not in chromosome.HC_resource:  # gen date with date not in resource
                 HC_resource += 1
             if error_output:
                 chromosome.HC_resource.append(date)
 
     return HC_time, HC_resource
-    # ,SC_score
 
 
 # fitness function for caculate score for every chromosome
@@ -171,7 +169,6 @@ def select_mating_pool(pop, num_parents_mating):
     index = np.random.choice(pop.shape[0], num_parents_mating, replace=False)
     random_individual = pop[index]
     pop = np.delete(pop, index)  # split current pop into remain_pop and mating_pool
-    # print (mating_pool)
     return random_individual
 
 
@@ -221,7 +218,6 @@ def mutation(population, random_rate):
     for chromosome in pop:
         mutate_flag = 0
         for task in chromosome.chromosome:
-            # print(task)
             rate = random.uniform(0, 1)
             if rate < random_rate:
                 index = random.randrange(task.rfind('-') + 1, len(task) - 4)
